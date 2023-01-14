@@ -49,19 +49,19 @@ def main():
 	Ts = np.linspace(0.*J,3.*J,nTs) ### Literature says BKT transition is at approximately .89 J 
 
 	#dt = .05### Time step (must be very small) 
-	nburn = 4000### Time steps we burn initially to equilibrate
-	ntimes = 4000### Number of times steps we calculate and measure for
+	nburn = 5000### Time steps we burn initially to equilibrate
+	ntimes = 5000### Number of times steps we calculate and measure for
 
 	ti = time.time()
 
-	opMean = np.zeros(nTs) ### Statistical average of local order parameter
+#	opMean = np.zeros(nTs) ### Statistical average of local order parameter
 	GxMean = np.zeros((nTs,L)) ### Statistical average of order parameter correlation function
 
 	for n in range(nTs):
 
 		t1 = time.time()
 		thetas = genThetas(L,Ts[n],nburn+ntimes)
-		opMean[n] = np.mean( np.exp(1.j*thetas[nburn:,0,0]) )
+	#	opMean[n] = np.mean( np.exp(1.j*thetas[nburn:,0,0]) )
 		GxMean[n,:] = np.mean( np.exp(1.j*(thetas[nburn:,:,0] - np.outer(thetas[nburn:,0,0],np.ones(L)) ) ), axis=0 )
 		t2 = time.time()
 		print("Temperature : ",n+1,"/",nTs,", Run time: ",t2-t1,"s")
@@ -71,11 +71,8 @@ def main():
 	print("Elapsed total time: ",tf-ti,"s")
 
 
-	plt.plot(Ts,np.abs(opMean)**2)
-	plt.show()
-	plt.plot(np.abs(GxMean[0,:])**2,c='blue')
-	plt.plot(np.abs(GxMean[1,:])**2,c='gray')
-	plt.plot(np.abs(GxMean[2,:])**2,c='red')
+	for n in range(nTs):
+		plt.plot(np.abs(GxMean[n,:])**2)
 	plt.show()
 
 
