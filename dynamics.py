@@ -8,13 +8,11 @@ import time
 
 def genThetas(L,T,ntimes,J=1.,dt = .05):
 	"""Generates a sequence of angles for a given system size, temperature, number of time steps, Josephson coupling (default is 1.) and time step size (default is 5% J)"""
-	### Returns thetas and elapsed time in seconds
 	### Uses periodic boundary conditions
 	### defaul time step is 5% of J
 
 	thetas = np.zeros((ntimes,L,L))
 
-	t0 = time.time()
 	for nt in range(1,ntimes):
 		for k in range(L*L):
 			x = k//L
@@ -30,12 +28,11 @@ def genThetas(L,T,ntimes,J=1.,dt = .05):
 		### We mod to range(-pi,pi)
 		thetas[nt,:,:] = thetas[nt,:,:] % (2.*np.pi) - np.pi*np.ones((L,L))
 
-	t1 = time.time()
 
-	return thetas, t1-t0
+	return thetas
 
-def calcOP2(thetas):
-	"""Calculates the system RMS of order parameter over time"""
+def calcOP(thetas):
+	"""Calculates the spatial average of order parameter over space"""
 	s = thetas.shape
 	ntimes = s[0]
 	OP = np.zeros(ntimes,dtype=complex)
@@ -43,65 +40,48 @@ def calcOP2(thetas):
 
 	return OP
 
-L = 200### Lattice size -- LxL lattice
 
-J = 1.### Phase stiffness in units of Kelvin
-#temps = np.linspace(0.,np.pi*J,10) ### Temperatures we study, we perform a sweep
-#ntemps = len(temps)
-T = 3.5*J ### Literature says BKT transition is at approximately .89 J 
+def main():
 
-dt = .05### Time step (must be very small) 
-ntimes = 1000### Number of times steps we calculate
+	L = 200### Lattice size -- LxL lattice
+	J = 1.### Phase stiffness in units of Kelvin
+	nTs = 5
+	Ts = np.linspace(0.*J,3.*J,nTs) ### Literature says BKT transition is at approximately .89 J 
 
-thetas,et = genThetas(L,T,ntimes)
+	#dt = .05### Time step (must be very small) 
+	nburn = 4000### Time steps we burn initially to equilibrate
+	ntimes = 4000### Number of times steps we calculate and measure for
 
-print("Elapsed time: ",et,"s")
+	ti = time.time()
 
-op = calcOP2(thetas)
+	opMean = np.zeros(nTs) ### Statistical average of local order parameter
+	GxMean = np.zeros((nTs,L)) ### Statistical average of order parameter correlation function
 
-plt.plot(np.abs(op)**2)
-plt.show()
+	for n in range(nTs):
 
-quit()
-
-OP = np.zeros(ntimes,dtype=complex)
-OP = np.mean(np.exp(1.j*thetas),axis=(-1,-2))
-
-plt.plot(np.abs(OP)**2)
-plt.show()
-
-quit()
+		t1 = time.time()
+		thetas = genThetas(L,Ts[n],nburn+ntimes)
+		opMean[n] = np.mean( np.exp(1.j*thetas[nburn:,0,0]) )
+		GxMean[n,:] = np.mean( np.exp(1.j*(thetas[nburn:,:,0] - np.outer(thetas[nburn:,0,0],np.ones(L)) ) ), axis=0 )
+		t2 = time.time()
+		print("Temperature : ",n+1,"/",nTs,", Run time: ",t2-t1,"s")
 
 
-thetas = np.zeros((ntimes,L,L))
-#thetas[0,:,:] = ( np.random.default_rng().uniform(-np.pi,np.pi,L*L) ).reshape((L,L))
-
-t0 = time.time()
+	tf = time.time()
+	print("Elapsed total time: ",tf-ti,"s")
 
 
-for nt in range(1,ntimes):
-	for k in range(L*L):
-		x = k//L
-		y = k % L
-		thetas[nt,x,y] = thetas[nt-1,x,y] - J*dt*(
-			np.sin( thetas[nt-1,x,y] - thetas[nt-1,(x+1)//L,y]) 
-			+np.sin( thetas[nt-1,x,y] - thetas[nt-1,x-1,y]) 
-			+np.sin( thetas[nt-1,x,y] - thetas[nt-1,x,(y+1)//L]) 
-			+np.sin( thetas[nt-1,x,y] - thetas[nt-1,x,y-1])
-			)
-
-	thetas[nt,:,:] +=  np.random.normal(0.,2.*T*dt,size=(L,L))
-	### We mod to range(-pi,pi)
-	thetas[nt,:,:] = thetas[nt,:,:] % (2.*np.pi) - np.pi*np.ones((L,L))
-
-tf = time.time()
-print("Elapsed time: ",tf-t0,"s")
-
-OP = np.zeros(ntimes,dtype=complex)
-OP = np.mean(np.exp(1.j*thetas),axis=(-1,-2))
-
-plt.plot(np.abs(OP)**2)
-plt.show()
+	plt.plot(Ts,np.abs(opMean)**2)
+	plt.show()
+	plt.plot(np.abs(GxMean[0,:])**2,c='blue')
+	plt.plot(np.abs(GxMean[1,:])**2,c='gray')
+	plt.plot(np.abs(GxMean[2,:])**2,c='red')
+	plt.show()
 
 
+
+
+
+if __name__ == "__main__":
+	main()
 
