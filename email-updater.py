@@ -7,14 +7,14 @@ import smtplib, ssl
 smtp_server = "smtp.gmail.com"
 port = 465
 
-sender_email= "John.S.Caine.2021@gmail.com"
+sender_email= ""###Your email here
 password = input("Type password: ")
 
-receiver_email = "5163163937@vtext.com"
+receiver_email = ""###Phone number @ portal here
 
-message = """Subject: Test
+message = """Subject: Calculation
 
-Test message."""
+Calculation n/N done, runtime: s"""
 
 context = ssl.create_default_context()
 
