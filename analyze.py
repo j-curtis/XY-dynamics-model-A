@@ -6,57 +6,40 @@ import numpy as np
 from matplotlib import pyplot as plt 
 import time 
 
+def csv2npy(fname):
+	data = np.genfromtxt(fname+".csv",delimiter=" ")
+	nt = data.shape[0]
+	L = int(np.sqrt(data.shape[1]))
+	data = data.reshape(nt,L,L)
+	np.save(fname+".npy",data)
+
+
+def plot(fname):
+
+	L = 500### Lattice size -- LxL lattice
+	J = 1.### Phase stiffness in units of Kelvin
+	T = .5*J ### Literature says BKT transition is at approximately .89 J 
+	#ntimes = 5000
+	dt = .05
+
+	data = np.load(fname+".npy")
+
+	Gxmean = np.zeros(L,dtype=complex)
+	Gxvar = np.zeros(L,dtype = complex)
+
+	for n in range(L):
+		Gxmean[n] = np.mean(np.exp(1.j*(data[:,n,0] - data[:,0,0] ) )  ,axis=0)
+		Gxvar[n] = np.var(np.exp(1.j*(data[:,n,0] - data[:,0,0] ) )  ,axis=0)
+
+	#Gx = np.mean(np.exp(1.j*(data[:,:,0] - np.outer(data[:,0,0],np.ones(L) ) ) ) ,axis=0)
+
+	plt.plot(np.abs(Gxmean)**2)
+	plt.show()
 
 def main():
-
-	L = 250### Lattice size -- LxL lattice
-	J = 1.### Phase stiffness in units of Kelvin
-	T = .7*.89*J ### Literature says BKT transition is at approximately .89 J 
-
-	#dt = .05### Time step (must be very small) 
-	nburn = 5000### Time steps we burn initially to equilibrate
-	ntimes = 3000### Number of times steps we calculate and measure for
-
-	tpts = 500 ###We sample correlation functions for t > nburn and t < tpts 
-	xpts = 100
-
-	thetas = np.load("thetas.npy")
-
-	Gtx = np.zeros((tpts,xpts),dtype=complex)
-
-	samplepts = 200 ### We randomly select this many points to sample correlation function
-
-	### We pick a spacetime separation of nt and nx
-	for nt in range(tpts):
-		for nx in range(xpts):
-
-			samples = np.zeros(samplepts,dtype=complex)
-
-			for k in range(samplepts):
-				pt = np.random.randint(L,size=2)
-
-				samples[k] = np.exp( 1.j* ( thetas[(nburn+nt),(pt[0] + nx)//L,pt[1]]-thetas[nburn,pt[0],pt[1]] ) ) 
-
-			Gtx[nt,nx] = np.mean(samples)
-
-	plt.plot(np.abs(Gtx[0,:])**2)
-	plt.plot(np.abs(Gtx[100,:])**2)
-	plt.plot(np.abs(Gtx[200,:])**2)
-	plt.plot(np.abs(Gtx[400,:])**2)
-	plt.show()
-
-
-	plt.plot(np.abs(Gtx[:,0])**2)
-	plt.plot(np.abs(Gtx[:,50])**2)
-	plt.plot(np.abs(Gtx[:,90])**2)
-	plt.show()
-
-	plt.imshow(np.abs(Gtx)**2 )
-	plt.colorbar()
-	plt.show()
-
-
-
+	fname = "thetas"
+	csv2npy(fname)
+	plot(fname)
 
 if __name__ == "__main__":
 	main()
