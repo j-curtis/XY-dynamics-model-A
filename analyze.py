@@ -60,15 +60,14 @@ def plotvorticity(fname):
 	nt = data.shape[0]
 	L = data.shape[1]
 
-	plt.imshow(data[0,:,:])
-	plt.colorbar()
-	plt.show()
+	for i in range(30):
+		plt.imshow(data[i*20,:30,:30])
+		plt.show()
+	
 
 def main():
-	fname = "vorticity"
-	#plotMs(fname)
-	csv2npy(fname)
-	#plotthetas(fname)
+	fname = "vorticity_10000s_T=0.5J"
+	#csv2npy(fname)
 	plotvorticity(fname)
 
 if __name__ == "__main__":

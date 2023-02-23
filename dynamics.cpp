@@ -65,7 +65,7 @@ double* OPav(size_t L, size_t ntimes, double T, double J){
 int main() {
 
 	const size_t L = 200;
-	const size_t ntimes = 5000;
+	const size_t ntimes = 10000;
 
 	//Measure energy in units of J
 	double J = 1.;
@@ -80,7 +80,7 @@ int main() {
 	}
 	*/
 	//Set temperature
-	double T = 4.*J;
+	double T = 1.5*J;
 
    	int t0 = std::time(NULL);
    	/*
@@ -125,6 +125,8 @@ int main() {
 			}
 		}
 	}
+
+	///*We remove these two lopps if we want to study the quench dynamics from the ordered phase in to the disordered phase
 
 	//Initialize the array back with the thermalized state
 	for(int nx = 0; nx < L; nx++){
@@ -190,7 +192,8 @@ int main() {
 
 	//Save vorticity to csv file (large data set)
 	std::ofstream outfile;
-	outfile.open("./vorticity.csv");
+	//outfile.open("./vorticity_10000s_T=1.5J_quench.csv");
+	outfile.open("./vorticity_10000s_T=1.5J.csv");
 	for(int t = 0; t < ntimes; t++){
 		for(int x =0; x < L; x++){
 			for(int y = 0; y < L; y++){
