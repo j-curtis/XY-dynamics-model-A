@@ -63,13 +63,38 @@ def plotvorticity(fname):
 	for i in range(30):
 		plt.imshow(data[i*20,:30,:30])
 		plt.show()
+
+
+def computeFFT(fname):
+	"""Computes the time-dependence spatial FFT of the vorticity in order to extract the momentum space autocorrelation functions"""
+	data = np.load(fname+".npy")
+	nt = data.shape[0]
+	L = data.shape[1]
+
+	### We now need to take the FFT for each time
+
+	data_kspace = np.mean(np.fft.fft2(data,axes=(-1,-2)),axis=0)
+
+	plt.imshow(data[0,:,:])
+	plt.colorbar()
+	plt.show()
+	plt.imshow(np.abs(data_kspace)**2)
+	plt.colorbar()
+	plt.show()
+
 	
 
 def main():
-	fname = "vorticity_10000s_T=0.5J"
+	fname = "vorticity_10000s_T=1.0J"
 	#csv2npy(fname)
-	plotvorticity(fname)
+	computeFFT(fname)
 
 if __name__ == "__main__":
 	main()
+
+
+
+
+
+
 

@@ -64,7 +64,7 @@ double* OPav(size_t L, size_t ntimes, double T, double J){
 
 int main() {
 
-	const size_t L = 200;
+	const size_t L = 350;
 	const size_t ntimes = 10000;
 
 	//Measure energy in units of J
@@ -80,7 +80,7 @@ int main() {
 	}
 	*/
 	//Set temperature
-	double T = 1.5*J;
+	double T = 0.8*J;
 
    	int t0 = std::time(NULL);
    	/*
@@ -193,7 +193,7 @@ int main() {
 	//Save vorticity to csv file (large data set)
 	std::ofstream outfile;
 	//outfile.open("./vorticity_10000s_T=1.5J_quench.csv");
-	outfile.open("./vorticity_10000s_T=1.5J.csv");
+	outfile.open("./vorticity_L=350_t=10000s_T=0.8J.csv");
 	for(int t = 0; t < ntimes; t++){
 		for(int x =0; x < L; x++){
 			for(int y = 0; y < L; y++){
