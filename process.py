@@ -60,16 +60,33 @@ def NVNoise(dataFFT,z,nts,Nsample):
 
 
 def main():
-	fname = "vorticity_L=350_t=10000s_T=0.3J"
-	csv2npy(fname)
-	data = np.load(fname+".npy")
-	L = data.shape[1]
 
-	dataFFT = np.fft.fftn(data[:,:,:],axes=[1,2])
+	labels = ["0.3","0.8","0.9","1.0","3.0"]
+	fnames = ["vorticity_L=350_t=10000s_T="+l+"J" for l in labels]
+	ntemps = len(labels)
+	temps = np.array([float(l) for l in labels])
 
-	np.save(fname+"_FFT.npy",dataFFT)
+	L = 350
 
+	staticFFTRMS = np.zeros((ntemps,L,L))
+
+	for i in range(ntemps):
+		data = np.load(fnames[i]+".npy")
+		fft = np.fft.fftn(data[-1000:,:,:],axes=[1,2])
+		meanFFT = np.mean(fft,axis=0)
+		staticFFTRMS[i,:,:] = np.real(np.mean(np.abs(fft)**2, axis= 0 ) - np.abs(meanFFT)**2)
+
+	for i in range(ntemps):
+		plt.plot(staticFFTRMS[i,0,:],label=r'$T/J = $'+labels[i])
+	plt.legend()
+	plt.show()
+
+	#np.save("staticFFT.npy",staticFFT)
+	
 	quit()
+
+	#np.save(fname+"_FFT.npy",dataFFT)
+
 
 	nts = 1000
 	Nsample  = 30
