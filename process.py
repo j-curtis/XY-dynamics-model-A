@@ -57,62 +57,76 @@ def NVNoise(dataFFT,z,nts,Nsample):
 
 	return np.real(noise)
 
+def correlationFFT(data,nts,Nsample):
+	"""Compute the vorticity autocorrelation function < n(q,t) n^*(q,0) > """
+	L = data.shape[1]
+	correlation = np.zeros((nts,L,L),dtype=complex)
+	meanFFT = np.zeros((L,L),dtype=complex)
+
+	for N in range(Nsample):
+		t0 = np.random.randint(0,data.shape[0]-nts)
+		meanFFT += np.fft.fftn(data[t0,:,:],axes=[0,1])/float(Nsample)
+
+	for N in range(Nsample):
+		t0 = np.random.randint(0,data.shape[0]-nts)
+		dataFFT0 = (np.fft.fftn(data[t0,:,:],axes=[0,1]) - meanFFT)
+		correlation[0,:,:] += dataFFT0*np.conjugate(dataFFT0)/float(Nsample)
+
+		for nt in range(1,nts):
+			dataFFT = (np.fft.fftn(data[t0+nt,:,:],axes=[0,1]) - meanFFT)
+			correlation[nt,:,:] += dataFFT*np.conjugate(dataFFT0)/float(Nsample)
+
+	return correlation
 
 
 def main():
 
-	labels = ["0.3","0.8","0.9","1.0","3.0"]
+	labels = ["0.8","0.9","1.0","3.0"]
 	fnames = ["vorticity_L=350_t=10000s_T="+l+"J" for l in labels]
 	ntemps = len(labels)
 	temps = np.array([float(l) for l in labels])
 
 	L = 350
+	Lsave = 50
+	nts = 50
+	Nsample = 300
+	z0 = 20
+	zf = 100.
+	nzs = 50
 
-	staticFFTRMS = np.zeros((ntemps,L,L))
+	zpts = np.linspace(z0,zf,nzs)
 
+	FFTs = np.zeros((ntemps,nts,Lsave,Lsave),dtype=complex)
+	noise = np.zeros((ntemps,nzs,nts))
 	for i in range(ntemps):
-		data = np.load(fnames[i]+".npy")
-		fft = np.fft.fftn(data[-1000:,:,:],axes=[1,2])
-		meanFFT = np.mean(fft,axis=0)
-		staticFFTRMS[i,:,:] = np.real(np.mean(np.abs(fft)**2, axis= 0 ) - np.abs(meanFFT)**2)
+		FFTs[i,:,:,:] = np.load(fnames[i]+"_correlationFFT.npy")
 
-	for i in range(ntemps):
-		plt.plot(staticFFTRMS[i,0,:],label=r'$T/J = $'+labels[i])
-	plt.legend()
-	plt.show()
+		for j in range(nzs):
+			filterfunc = (genNVFilter(zpts[j],L)[:Lsave,:Lsave])**2
 
-	#np.save("staticFFT.npy",staticFFT)
-	
-	quit()
+			noise[i,j,:] = np.sum(np.tensordot(np.ones(nts),filterfunc[1:,1:],axes=0)*FFTs[i,:,1:,1:], axis=(1,2) )
 
-	#np.save(fname+"_FFT.npy",dataFFT)
-
-
-	nts = 1000
-	Nsample  = 30
-
-	plt.plot(NVNoise(dataFFT,z=.1,nts = nts,Nsample=Nsample),label=r'z = 0.1')
-	plt.plot(NVNoise(dataFFT,z=.5,nts = nts,Nsample=Nsample),label=r'z = 0.5')
-	plt.plot(NVNoise(dataFFT,z=1.,nts = nts,Nsample=Nsample),label=r'z = 1.0')
-	plt.plot(NVNoise(dataFFT,z=5.,nts = nts,Nsample=Nsample),label=r'z = 5.0')
-	plt.yscale('log')
-	plt.xscale('log')
-	plt.legend()
-	plt.show()
-
-	quit()
-
-	for nt in range(20):
-		dataFFT = np.fft.fftn(data[nt,:,:],s=(L,L))
-		filt = np.real(np.fft.ifftn(filterfunc*dataFFT))
-
-	
-		plt.imshow(filt)
-		plt.colorbar()
+		plt.plot(noise[i,10,:])
+		plt.xlabel(r'$t$')
+		plt.yscale('log')
 		plt.show()
-
+		
+		plt.plot(zpts,noise[i,:,10])
+		plt.xlabel(r'$z [\xi_c]$')
+		plt.yscale('log')
+		plt.show()
 
 
 
 if __name__ == "__main__":
 	main()
+
+
+
+
+
+
+
+
+
+
