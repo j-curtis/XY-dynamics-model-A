@@ -13,6 +13,8 @@ def csv2npy(fname):
 	data = data.reshape(nt,L,L)
 	np.save(fname+".npy",data)
 
+	return data
+
 
 
 def noise_vs_z(data):
@@ -81,41 +83,126 @@ def correlationFFT(data,nts,Nsample):
 
 def main():
 
-	labels = ["0.8","0.9","1.0","3.0"]
-	fnames = ["vorticity_L=350_t=10000s_T="+l+"J" for l in labels]
+	prefix = "./L=100/vorticity_L=100_t=20000_T="
+	labels = ["0.60","0.70","0.75","0.80","0.85","0.90","0.95","1.00","1.05","1.10","1.15","1.20","1.50"]
+
+	### We downfold the time traces into correlation functions by sampling Nsample times and recording the time-delay correlation function for nts points
+	### Ideally this would have an independent sampling from at least nts x Nsample points but we will make due with what we have and slightly oversample instead
 	ntemps = len(labels)
-	temps = np.array([float(l) for l in labels])
 
-	L = 350
-	Lsave = 50
-	nts = 50
-	Nsample = 300
-	z0 = 20
-	zf = 100.
-	nzs = 50
+	nts = 200
+	Nsample = 200
 
-	zpts = np.linspace(z0,zf,nzs)
+	for j in range(ntemps):
+		t0 = time.time()
+		fname = prefix+labels[j]
 
-	FFTs = np.zeros((ntemps,nts,Lsave,Lsave),dtype=complex)
-	noise = np.zeros((ntemps,nzs,nts))
-	for i in range(ntemps):
-		FFTs[i,:,:,:] = np.load(fnames[i]+"_correlationFFT.npy")
+		print("Loading data T="+labels[j])
+		data = np.load(fname+".npy")
 
-		for j in range(nzs):
-			filterfunc = (genNVFilter(zpts[j],L)[:Lsave,:Lsave])**2
-
-			noise[i,j,:] = np.sum(np.tensordot(np.ones(nts),filterfunc[1:,1:],axes=0)*FFTs[i,:,1:,1:], axis=(1,2) )
-
-		plt.plot(noise[i,10,:])
-		plt.xlabel(r'$t$')
-		plt.yscale('log')
-		plt.show()
+		correlation = correlationFFT(data,nts,Nsample)
 		
-		plt.plot(zpts,noise[i,:,10])
-		plt.xlabel(r'$z [\xi_c]$')
-		plt.yscale('log')
-		plt.show()
+		np.save(fname+"_correlation.npy",correlation)
 
+		tf = time.time()
+		print(str(tf-t0)+"s for T ="+labels[j]+"")
+
+	nzpts = 50
+	zpts = np.linspace(1.,50.,nzpts)
+
+	L = 100
+
+	filters = np.zeros((nzpts,L,L))
+	for j in range(nzpts):
+		filters[j,:,:] = genNVFilter(zpts[j],L)
+
+
+	NVdata = np.zeros((ntemps,nzpts,nts))
+
+	for j in range(ntemps):
+		t0 = time.time()
+		fname = prefix+labels[j]
+
+		print("Loading correlation function T="+labels[j])
+		data = np.load(fname+"_correlation.npy")
+
+		for k in range(nzpts):
+			NVdata[j,k,:] = np.sum(np.tensordot(np.ones(nts),filters[k,:,:],axes=0)*data,axis=(1,2)) 
+	
+		tf = time.time()
+		print(str(tf-t0)+"s for T ="+labels[j])
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,10,:]/NVdata[j,10,0],label=r'$T = $'+labels[j])
+		plt.title(r'z/$\xi_c$ = '+str(zpts[10]))
+		plt.xlabel("t")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,20,:]/NVdata[j,20,0],label=r'$T = $'+labels[j])
+		plt.title(r'z/$\xi_c$ = '+str(zpts[20]))
+		plt.xlabel("t")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,40,:]/NVdata[j,40,0],label=r'$T = $'+labels[j])
+		plt.title(r'z/$\xi_c$ = '+str(zpts[40]))
+		plt.xlabel("t")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,:,0]/NVdata[j,0,0],label=r'$T = $'+labels[j])
+		plt.title(r't = '+str(0))
+		plt.xlabel("z")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,:,50]/NVdata[j,0,50],label=r'$T = $'+labels[j])
+		plt.title(r't = '+str(50))
+		plt.xlabel("z")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,:,100]/NVdata[j,0,100],label=r'$T = $'+labels[j])
+		plt.title(r't = '+str(100))
+		plt.xlabel("z")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,:,150]/NVdata[j,0,150],label=r'$T = $'+labels[j])
+		plt.title(r't = '+str(150))
+		plt.xlabel("z")
+
+	plt.legend()
+	plt.show()
+
+	for j in range(ntemps):
+
+		plt.plot(NVdata[j,:,-1]/NVdata[j,0,-1],label=r'$T = $'+labels[j])
+		plt.title(r't = '+str(-1))
+		plt.xlabel("z")
+
+	plt.legend()
+	plt.show()
 
 
 if __name__ == "__main__":
